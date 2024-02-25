@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Shooter Detection System</title>
+    <style>
+        .message {
+            color: green;
+            font-size: 1.5em;
+        }
+        .message.threat-detected {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Active Shooter Detection System</h1>
+    <button id="playButton">Play Random Sound</button>
+    <audio id="audioPlayer" controls hidden></audio>
+    <div id="message" class="message"></div>
+
+    <script>
+        document.getElementById('playButton').addEventListener('click', function() {
+            fetch('/play_random_sound')
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const audioPlayer = document.getElementById('audioPlayer');
+                    audioPlayer.src = url;
+                    audioPlayer.play();
+                    audioPlayer.onended = function() {
+                        // Trigger prediction after the audio ends
+                        predict();
+                    };
+                })
+                .catch(error => console.error('Error playing sound:', error));
+        });
+
+        function predict() {
+            fetch('/predict')
+                .then(response => response.json())
+                .then(data => {
+                    const messageDiv = document.getElementById('message');
+                    messageDiv.textContent = data.result;
+                    if (data.result.includes("Threat detected")) {
+                        messageDiv.classList.add('threat-detected');
+                    } else {
+                        messageDiv.classList.remove('threat-detected');
+                    }
+                })
+                .catch(error => console.error('Error predicting:', error));
+        }
+    </script>
+</body>
+</html>
