@@ -65,6 +65,9 @@ def play_random_sound():
     # Get a list of audio files
     audio_files = os.listdir(AUDIO_FOLDER_PATH)
     
+    if not audio_files:
+        return jsonify(result="Error: No audio files available."), 400
+    
     # Randomly select an audio file
     selected_file = random.choice(audio_files)
     session['selected_audio'] = selected_file
@@ -81,6 +84,9 @@ def predict():
     
     # Load audio file
     audio_path = os.path.join(AUDIO_FOLDER_PATH, selected_file)
+    if not os.path.exists(audio_path):
+        return jsonify(result="Error: Audio file not found."), 404
+
     audio, sr = librosa.load(audio_path, sr=None)
 
     # Extract features

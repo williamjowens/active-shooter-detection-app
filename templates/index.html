@@ -22,8 +22,17 @@
 
     <script>
         document.getElementById('playButton').addEventListener('click', function() {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = ''; // Clear any existing messages
+            messageDiv.classList.remove('threat-detected');
+
             fetch('/play_random_sound')
-                .then(response => response.blob())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.blob();
+                })
                 .then(blob => {
                     const url = window.URL.createObjectURL(blob);
                     const audioPlayer = document.getElementById('audioPlayer');
@@ -34,7 +43,10 @@
                         predict();
                     };
                 })
-                .catch(error => console.error('Error playing sound:', error));
+                .catch(error => {
+                    console.error('Error playing sound:', error);
+                    messageDiv.textContent = 'Error: Could not play sound.';
+                });
         });
 
         function predict() {
