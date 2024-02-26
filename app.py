@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
 
 # Load the trained model and the scaler
-model = tf.keras.models.load_model('best_model_final.tf')
+model = tf.keras.models.load_model('best_model_final')
 scaler = joblib.load('scaler.joblib')
 
 # Define the path to the audio files
