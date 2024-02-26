@@ -8,20 +8,27 @@
     <style>
         body {
             padding-top: 50px;
-            background-color: #f7f7f7;
+            background-color: #eef2f7;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         .container {
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: auto;
+        }
+        .header {
+            margin-bottom: 30px;
         }
         .message {
             font-size: 1.2em;
             margin-top: 20px;
-            padding: 10px;
-            border-radius: 5px;
+            padding: 15px;
+            border-radius: 7px;
             text-align: center;
+            transition: all 0.5s;
         }
         .message.threat-detected {
             color: white;
@@ -32,15 +39,24 @@
             background-color: #28a745;
         }
         #playButton {
-            width: 100%;
+            width: auto;
+            padding: 10px 20px;
+            font-size: 1em;
+            margin-top: 20px;
+        }
+        audio {
             margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="container text-center">
-        <h1>Active Shooter Detection System</h1>
-        <button id="playButton" class="btn btn-primary btn-lg">Play Random Sound</button>
+    <div class="container">
+        <div class="header text-center">
+            <h1>Active Shooter Detection System</h1>
+        </div>
+        <div class="text-center">
+            <button id="playButton" class="btn btn-primary btn-lg">Play Random Sound</button>
+        </div>
         <audio id="audioPlayer" controls hidden></audio>
         <div id="message" class="message"></div>
     </div>
@@ -49,6 +65,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.16.0/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
+        let currentFilename = '';
+
         document.getElementById('playButton').addEventListener('click', function() {
             const messageDiv = document.getElementById('message');
             messageDiv.textContent = 'Loading audio...';
@@ -66,9 +84,7 @@
                     const audioPlayer = document.getElementById('audioPlayer');
                     audioPlayer.src = url;
                     audioPlayer.play();
-                    audioPlayer.onended = function() {
-                        predict();
-                    };
+                    currentFilename = response.headers.get('Content-Disposition').split('filename=')[1].replaceAll('"', '');
                 })
                 .catch(error => {
                     console.error('Error playing sound:', error);
@@ -76,27 +92,33 @@
                     messageDiv.className += ' no-threat';
                 });
         });
-        
+
         function predict() {
             const messageDiv = document.getElementById('message');
             messageDiv.textContent = 'Analyzing audio...';
-            
-            fetch('/predict')
-                .then(response => response.json())
-                .then(data => {
-                    messageDiv.textContent = data.result;
-                    messageDiv.className = 'message';
-                    if (data.result.includes("Threat detected")) {
-                        messageDiv.classList.add('threat-detected');
-                    } else {
-                        messageDiv.classList.add('no-threat');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error predicting:', error);
-                    messageDiv.textContent = 'Error: Prediction failed.';
-                    messageDiv.className += ' no-threat';
-                });
+
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ filename: currentFilename }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                messageDiv.textContent = data.result;
+                messageDiv.className = 'message';
+                if (data.result.includes("Threat detected")) {
+                    messageDiv.classList.add('threat-detected');
+                } else {
+                    messageDiv.classList.add('no-threat');
+                }
+            })
+            .catch(error => {
+                console.error('Error predicting:', error);
+                messageDiv.textContent = 'Error: Prediction failed.';
+                messageDiv.className += ' no-threat';
+            });
         }
     </script>
 </body>

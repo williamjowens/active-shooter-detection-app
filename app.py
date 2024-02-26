@@ -1,27 +1,16 @@
-from flask import Flask, render_template, request, jsonify, send_file, session
+from flask import Flask, render_template, request, jsonify, send_file
 import numpy as np
 import librosa
 import tensorflow as tf
 import joblib
 import os
-import secrets
 import random
 
 app = Flask(__name__)
-app.secret_key = secrets.token_hex(16)
 
 # Load the trained model and the scaler
-model = None
+model = tf.keras.models.load_model('best_model_final')
 scaler = joblib.load('scaler.joblib')
-
-def load_model():
-    global model
-    if model is None:
-        try:
-            model = tf.keras.models.load_model('best_model_final')
-            print("Model loaded successfully.")
-        except Exception as e:
-            print(f"Error loading model: {e}")
 
 # Define the path to the audio files
 AUDIO_FOLDER_PATH = 'audio'
@@ -75,55 +64,43 @@ def play_random_sound():
     audio_files = os.listdir(AUDIO_FOLDER_PATH)
     
     if not audio_files:
-        return jsonify(result="Error: No audio files available."), 400
+        return jsonify({"error": "No audio files available"}), 400
     
     # Randomly select an audio file
     selected_file = random.choice(audio_files)
-    session['selected_audio'] = selected_file
     
     # Send the audio file for playback
-    return send_file(os.path.join(AUDIO_FOLDER_PATH, selected_file), as_attachment=True)
+    return send_file(os.path.join(AUDIO_FOLDER_PATH, selected_file), mimetype='audio/wav', as_attachment=True, attachment_filename=selected_file)
 
-@app.route('/predict', methods=['GET'])
+@app.route('/predict', methods=['POST'])
 def predict():
-    # Load the model
-    load_model()
+    # Retrieve the selected audio file name from the request data
+    filename = request.json['filename']
+    audio_path = os.path.join(AUDIO_FOLDER_PATH, filename)
+    if not os.path.exists(audio_path):
+        return jsonify({"error": "File not found"}), 404
+
+    # Load the audio
+    audio, sr = librosa.load(audio_path, sr=None)
     
-    # Retrieve the selected audio file name from the session
-    selected_file = session.get('selected_audio')
-    if not selected_file:
-        return jsonify(result="Error: No audio file selected."), 400
-    
-    try:
-        # Load audio file
-        audio_path = os.path.join(AUDIO_FOLDER_PATH, selected_file)
-        audio, sr = librosa.load(audio_path, sr=None)
+    # Extract features
+    features = extract_features(audio, sr)
 
-        # Extract features
-        features = extract_features(audio, sr)
+    # Scale the features
+    features_scaled = scaler.transform(features)
 
-        # Scale the features
-        features_scaled = scaler.transform(features)
+    # Predict the class
+    prediction = model.predict(features_scaled)
+    predicted_class = (prediction > 0.5).astype(int)
 
-        # Predict the class
-        prediction = model.predict(features_scaled)
-        predicted_class = (prediction > 0.5).astype(int)
-
-        # Determine the message
-        if predicted_class == 1:
-            message = "Threat detected. Local authorities and emergency services have been contacted."
-        else:
-            message = "No threat detected."
-
-    except Exception as e:
-        print(f"An error occurred during prediction: {e}")
-        message = "Error: An issue occurred during the analysis."
-    
-    # Remove the selected_audio from session
-    session.pop('selected_audio', None)
+    # Determine the message
+    if predicted_class == 1:
+        message = "Threat detected. Local authorities and emergency services have been contacted."
+    else:
+        message = "No threat detected."
 
     # Return the message
-    return jsonify(result=message)
+    return jsonify({"result": message})
     
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
