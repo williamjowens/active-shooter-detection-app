@@ -24,4 +24,4 @@ RUN useradd -m appuser
 USER appuser
 
 # Command to run the application
-CMD gunicorn --workers=3 --bind 0.0.0.0:$PORT app:app
+CMD gunicorn --workers=2 --bind 0.0.0.0:$PORT app:app

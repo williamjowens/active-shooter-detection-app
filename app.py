@@ -6,6 +6,7 @@ import joblib
 import os
 import random
 import logging
+import gc
 
 # Set up basic logging
 logging.basicConfig(level=logging.INFO)
@@ -107,6 +108,10 @@ def predict():
         message = "Threat detected. Local authorities and emergency services have been contacted."
     else:
         message = "No threat detected."
+        
+    # Memory cleanup
+    del audio, features, features_scaled, prediction
+    gc.collect()
 
     # Return the message
     return jsonify({"result": message})
