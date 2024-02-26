@@ -66,7 +66,9 @@
                     const audioPlayer = document.getElementById('audioPlayer');
                     audioPlayer.src = url;
                     audioPlayer.play();
-                    messageDiv.textContent = 'Analyzing audio...';
+                    audioPlayer.onended = function() {
+                        predict();
+                    };
                 })
                 .catch(error => {
                     console.error('Error playing sound:', error);
@@ -76,15 +78,18 @@
         });
         
         function predict() {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = 'Analyzing audio...';
+            
             fetch('/predict')
                 .then(response => response.json())
                 .then(data => {
-                    const messageDiv = document.getElementById('message');
                     messageDiv.textContent = data.result;
+                    messageDiv.className = 'message';
                     if (data.result.includes("Threat detected")) {
-                        messageDiv.className += ' threat-detected';
+                        messageDiv.classList.add('threat-detected');
                     } else {
-                        messageDiv.className += ' no-threat';
+                        messageDiv.classList.add('no-threat');
                     }
                 })
                 .catch(error => {

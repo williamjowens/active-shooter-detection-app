@@ -11,12 +11,17 @@ app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
 
 # Load the trained model and the scaler
-try:
-    model = tf.keras.models.load_model('best_model_final')
-    print("Model loaded successfully.")
-except Exception as e:
-    print(f"Error loading model: {e}")
+model = None
 scaler = joblib.load('scaler.joblib')
+
+def load_model():
+    global model
+    if model is None:
+        try:
+            model = tf.keras.models.load_model('best_model_final')
+            print("Model loaded successfully.")
+        except Exception as e:
+            print(f"Error loading model: {e}")
 
 # Define the path to the audio files
 AUDIO_FOLDER_PATH = 'audio'
@@ -81,6 +86,9 @@ def play_random_sound():
 
 @app.route('/predict', methods=['GET'])
 def predict():
+    # Load the model
+    load_model()
+    
     # Retrieve the selected audio file name from the session
     selected_file = session.pop('selected_audio', None)
     if not selected_file:
