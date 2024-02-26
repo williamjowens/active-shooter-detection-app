@@ -86,30 +86,30 @@ def predict():
     if not selected_file:
         return jsonify(result="Error: No audio file selected."), 400
     
-    # Load audio file
-    audio_path = os.path.join(AUDIO_FOLDER_PATH, selected_file)
-    if not os.path.exists(audio_path):
-        return jsonify(result="Error: Audio file not found."), 404
+    try:
+        # Load audio file
+        audio_path = os.path.join(AUDIO_FOLDER_PATH, selected_file)
+        audio, sr = librosa.load(audio_path, sr=None)
 
-    audio, sr = librosa.load(audio_path, sr=None)
+        # Extract features
+        features = extract_features(audio, sr)
 
-    # Extract features
-    features = extract_features(audio, sr)
+        # Scale the features
+        features_scaled = scaler.transform(features)
 
-    # Scale the features
-    features_scaled = scaler.transform(features)
+        # Predict the class
+        prediction = model.predict(features_scaled)
+        predicted_class = (prediction > 0.5).astype(int)
 
-    # Predict the class
-    prediction = model.predict(features_scaled)
-    print(f"Prediction: {prediction}")
-    predicted_class = (prediction > 0.5).astype(int)
-    print(f"Predicted Class: {predicted_class}")
+        # Determine the message
+        if predicted_class == 1:
+            message = "Threat detected. Local authorities and emergency services have been contacted."
+        else:
+            message = "No threat detected."
 
-    # Determine the message
-    if predicted_class == 1:
-        message = "Threat detected. Local authorities and emergency services have been contacted."
-    else:
-        message = "No threat detected."
+    except Exception as e:
+        print(f"An error occurred during prediction: {e}")
+        message = "Error: An issue occurred during the analysis."
 
     # Return the message
     return jsonify(result=message)
