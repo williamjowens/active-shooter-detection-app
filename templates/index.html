@@ -82,7 +82,9 @@
                     });
                 })
                 .then(({ blob, filename }) => {
+                    console.log('Blob created:', blob);
                     const url = window.URL.createObjectURL(blob);
+                    console.log('Object URL created:', url);
                     const audioPlayer = document.getElementById('audioPlayer');
                     audioPlayer.src = url;
                     audioPlayer.hidden = false;
