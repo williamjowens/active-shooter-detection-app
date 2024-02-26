@@ -56,6 +56,7 @@
         </div>
         <div class="text-center">
             <button id="playButton" class="btn btn-primary btn-lg">Play Random Sound</button>
+            <button id="analyzeButton" class="btn btn-warning btn-lg" style="margin-top: 10px;" disabled>Analyze Sound</button>
         </div>
         <audio id="audioPlayer" controls hidden></audio>
         <div id="message" class="message"></div>
@@ -65,8 +66,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.16.0/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-        let currentFilename = '';
-
         document.getElementById('playButton').addEventListener('click', function() {
             const messageDiv = document.getElementById('message');
             messageDiv.textContent = 'Loading audio...';
@@ -77,6 +76,7 @@
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
                     }
+                    currentFilename = response.headers.get('Content-Disposition').split('filename=')[1].replaceAll('"', '');
                     return response.blob();
                 })
                 .then(blob => {
@@ -84,7 +84,9 @@
                     const audioPlayer = document.getElementById('audioPlayer');
                     audioPlayer.src = url;
                     audioPlayer.play();
-                    currentFilename = response.headers.get('Content-Disposition').split('filename=')[1].replaceAll('"', '');
+                    audioPlayer.hidden = false;
+                    // Enable the analyze button after playing sound
+                    document.getElementById('analyzeButton').disabled = false;
                 })
                 .catch(error => {
                     console.error('Error playing sound:', error);
@@ -93,10 +95,13 @@
                 });
         });
 
+        document.getElementById('analyzeButton').addEventListener('click', function() {
+            predict();
+        });
+
         function predict() {
             const messageDiv = document.getElementById('message');
             messageDiv.textContent = 'Analyzing audio...';
-
             fetch('/predict', {
                 method: 'POST',
                 headers: {
@@ -113,6 +118,8 @@
                 } else {
                     messageDiv.classList.add('no-threat');
                 }
+                // Disable the analyze button after analysis
+                document.getElementById('analyzeButton').disabled = true;
             })
             .catch(error => {
                 console.error('Error predicting:', error);
