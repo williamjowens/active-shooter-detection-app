@@ -51,9 +51,9 @@
     <script>
         document.getElementById('playButton').addEventListener('click', function() {
             const messageDiv = document.getElementById('message');
-            messageDiv.textContent = '';
+            messageDiv.textContent = 'Loading audio...';
             messageDiv.className = 'message';
-
+        
             fetch('/play_random_sound')
                 .then(response => {
                     if (!response.ok) {
@@ -66,10 +66,7 @@
                     const audioPlayer = document.getElementById('audioPlayer');
                     audioPlayer.src = url;
                     audioPlayer.play();
-                    audioPlayer.onended = function() {
-                        // Trigger prediction after the audio ends
-                        predict();
-                    };
+                    messageDiv.textContent = 'Analyzing audio...';
                 })
                 .catch(error => {
                     console.error('Error playing sound:', error);
@@ -77,7 +74,7 @@
                     messageDiv.className += ' no-threat';
                 });
         });
-
+        
         function predict() {
             fetch('/predict')
                 .then(response => response.json())

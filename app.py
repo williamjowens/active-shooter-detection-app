@@ -11,7 +11,11 @@ app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
 
 # Load the trained model and the scaler
-model = tf.keras.models.load_model('best_model_final')
+try:
+    model = tf.keras.models.load_model('best_model_final')
+    print("Model loaded successfully.")
+except Exception as e:
+    print(f"Error loading model: {e}")
 scaler = joblib.load('scaler.joblib')
 
 # Define the path to the audio files
@@ -97,7 +101,9 @@ def predict():
 
     # Predict the class
     prediction = model.predict(features_scaled)
+    print(f"Prediction: {prediction}")
     predicted_class = (prediction > 0.5).astype(int)
+    print(f"Predicted Class: {predicted_class}")
 
     # Determine the message
     if predicted_class == 1:
