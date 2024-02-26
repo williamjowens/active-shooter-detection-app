@@ -75,7 +75,6 @@
                     if (!response.ok) {
                         throw new Error(`Network response was not ok, status: ${response.status}`);
                     }
-                    // More robust header parsing
                     const contentDisposition = response.headers.get('Content-Disposition');
                     let filename = "downloaded_file.wav";
                     if (contentDisposition) {
