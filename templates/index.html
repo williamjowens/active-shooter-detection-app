@@ -76,17 +76,17 @@
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
                     }
-                    currentFilename = response.headers.get('Content-Disposition').split('filename=')[1].replaceAll('"', '');
-                    return response.blob();
+                    return response.blob().then(blob => {
+                        return {blob, filename: response.headers.get('Content-Disposition').split('filename=')[1].replaceAll('"', '')};
+                    });
                 })
-                .then(blob => {
+                .then(({blob, filename}) => {
                     const url = window.URL.createObjectURL(blob);
                     const audioPlayer = document.getElementById('audioPlayer');
                     audioPlayer.src = url;
-                    audioPlayer.play();
                     audioPlayer.hidden = false;
-                    // Enable the analyze button after playing sound
-                    document.getElementById('analyzeButton').disabled = false;
+                    audioPlayer.onended = () => predict(filename);
+                    audioPlayer.play();
                 })
                 .catch(error => {
                     console.error('Error playing sound:', error);
@@ -94,12 +94,8 @@
                     messageDiv.className += ' no-threat';
                 });
         });
-
-        document.getElementById('analyzeButton').addEventListener('click', function() {
-            predict();
-        });
-
-        function predict() {
+    
+        function predict(filename) {
             const messageDiv = document.getElementById('message');
             messageDiv.textContent = 'Analyzing audio...';
             fetch('/predict', {
@@ -107,7 +103,7 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ filename: currentFilename }),
+                body: JSON.stringify({ filename }),
             })
             .then(response => response.json())
             .then(data => {
@@ -118,8 +114,6 @@
                 } else {
                     messageDiv.classList.add('no-threat');
                 }
-                // Disable the analyze button after analysis
-                document.getElementById('analyzeButton').disabled = true;
             })
             .catch(error => {
                 console.error('Error predicting:', error);
@@ -127,6 +121,6 @@
                 messageDiv.className += ' no-threat';
             });
         }
-    </script>
+    </script>    
 </body>
 </html>
