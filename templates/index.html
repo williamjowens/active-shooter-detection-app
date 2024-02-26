@@ -4,27 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Active Shooter Detection System</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
+        body {
+            padding-top: 50px;
+            background-color: #f7f7f7;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
         .message {
-            color: green;
-            font-size: 1.5em;
+            font-size: 1.2em;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
         }
         .message.threat-detected {
-            color: red;
+            color: white;
+            background-color: #dc3545;
+        }
+        .message.no-threat {
+            color: white;
+            background-color: #28a745;
+        }
+        #playButton {
+            width: 100%;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <h1>Active Shooter Detection System</h1>
-    <button id="playButton">Play Random Sound</button>
-    <audio id="audioPlayer" controls hidden></audio>
-    <div id="message" class="message"></div>
+    <div class="container text-center">
+        <h1>Active Shooter Detection System</h1>
+        <button id="playButton" class="btn btn-primary btn-lg">Play Random Sound</button>
+        <audio id="audioPlayer" controls hidden></audio>
+        <div id="message" class="message"></div>
+    </div>
 
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
         document.getElementById('playButton').addEventListener('click', function() {
             const messageDiv = document.getElementById('message');
-            messageDiv.textContent = ''; // Clear any existing messages
-            messageDiv.classList.remove('threat-detected');
+            messageDiv.textContent = '';
+            messageDiv.className = 'message';
 
             fetch('/play_random_sound')
                 .then(response => {
@@ -46,6 +74,7 @@
                 .catch(error => {
                     console.error('Error playing sound:', error);
                     messageDiv.textContent = 'Error: Could not play sound.';
+                    messageDiv.className += ' no-threat';
                 });
         });
 
@@ -56,12 +85,16 @@
                     const messageDiv = document.getElementById('message');
                     messageDiv.textContent = data.result;
                     if (data.result.includes("Threat detected")) {
-                        messageDiv.classList.add('threat-detected');
+                        messageDiv.className += ' threat-detected';
                     } else {
-                        messageDiv.classList.remove('threat-detected');
+                        messageDiv.className += ' no-threat';
                     }
                 })
-                .catch(error => console.error('Error predicting:', error));
+                .catch(error => {
+                    console.error('Error predicting:', error);
+                    messageDiv.textContent = 'Error: Prediction failed.';
+                    messageDiv.className += ' no-threat';
+                });
         }
     </script>
 </body>
