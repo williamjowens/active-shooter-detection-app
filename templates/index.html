@@ -56,7 +56,6 @@
         </div>
         <div class="text-center">
             <button id="playButton" class="btn btn-primary btn-lg">Play Random Sound</button>
-            <button id="analyzeButton" class="btn btn-warning btn-lg" style="margin-top: 10px;" disabled>Analyze Sound</button>
         </div>
         <audio id="audioPlayer" controls hidden></audio>
         <div id="message" class="message"></div>
@@ -76,16 +75,18 @@
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
                     }
+                    // Extract filename from the Content-Disposition header
+                    const filename = response.headers.get('Content-Disposition').split('filename=')[1].replaceAll('"', '');
                     return response.blob().then(blob => {
-                        return {blob, filename: response.headers.get('Content-Disposition').split('filename=')[1].replaceAll('"', '')};
+                        return { blob, filename };
                     });
                 })
-                .then(({blob, filename}) => {
+                .then(({ blob, filename }) => {
                     const url = window.URL.createObjectURL(blob);
                     const audioPlayer = document.getElementById('audioPlayer');
                     audioPlayer.src = url;
                     audioPlayer.hidden = false;
-                    audioPlayer.onended = () => predict(filename);
+                    audioPlayer.onended = () => predict(filename); // Trigger prediction after audio ends
                     audioPlayer.play();
                 })
                 .catch(error => {
@@ -94,7 +95,7 @@
                     messageDiv.className += ' no-threat';
                 });
         });
-    
+        
         function predict(filename) {
             const messageDiv = document.getElementById('message');
             messageDiv.textContent = 'Analyzing audio...';
@@ -121,6 +122,6 @@
                 messageDiv.className += ' no-threat';
             });
         }
-    </script>    
+    </script>        
 </body>
 </html>
