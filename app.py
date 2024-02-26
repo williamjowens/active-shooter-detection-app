@@ -90,7 +90,7 @@ def predict():
     load_model()
     
     # Retrieve the selected audio file name from the session
-    selected_file = session.pop('selected_audio', None)
+    selected_file = session.get('selected_audio')
     if not selected_file:
         return jsonify(result="Error: No audio file selected."), 400
     
@@ -118,6 +118,9 @@ def predict():
     except Exception as e:
         print(f"An error occurred during prediction: {e}")
         message = "Error: An issue occurred during the analysis."
+    
+    # Remove the selected_audio from session
+    session.pop('selected_audio', None)
 
     # Return the message
     return jsonify(result=message)
