@@ -1,10 +1,14 @@
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, Response
 import numpy as np
 import librosa
 import tensorflow as tf
 import joblib
 import os
 import random
+import logging
+
+# Set up basic logging
+logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 
@@ -60,17 +64,22 @@ def index():
 
 @app.route('/play_random_sound', methods=['GET'])
 def play_random_sound():
-    # Get a list of audio files
-    audio_files = os.listdir(AUDIO_FOLDER_PATH)
-    
-    if not audio_files:
-        return jsonify({"error": "No audio files available"}), 400
-    
-    # Randomly select an audio file
-    selected_file = random.choice(audio_files)
-    
-    # Send the audio file for playback
-    return send_file(os.path.join(AUDIO_FOLDER_PATH, selected_file), mimetype='audio/wav', as_attachment=True, attachment_filename=selected_file)
+    try:
+        # Get a list of audio files
+        audio_files = [file for file in os.listdir(AUDIO_FOLDER_PATH) if file.endswith('.wav')]
+        
+        if not audio_files:
+            return jsonify({"error": "No audio files available"}), 400
+        
+        # Randomly select an audio file
+        selected_file = random.choice(audio_files)
+        file_path = os.path.join(AUDIO_FOLDER_PATH, selected_file)
+        
+        # Send the audio file for playback with explicit content type
+        return send_file(file_path, mimetype='audio/wav')
+    except Exception as e:
+        logging.error(f"Failed to serve audio file: {e}")
+        return jsonify({"error": "Internal server error"}), 500
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -104,4 +113,4 @@ def predict():
     
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=port, debug=True)

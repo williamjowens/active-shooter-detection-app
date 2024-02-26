@@ -73,10 +73,18 @@
             fetch('/play_random_sound')
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('Network response was not ok');
+                        throw new Error(`Network response was not ok, status: ${response.status}`);
                     }
-                    // Extract filename from the Content-Disposition header
-                    const filename = response.headers.get('Content-Disposition').split('filename=')[1].replaceAll('"', '');
+                    // More robust header parsing
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let filename = "downloaded_file.wav";
+                    if (contentDisposition) {
+                        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                        let matches = filenameRegex.exec(contentDisposition);
+                        if (matches != null && matches[1]) { 
+                          filename = matches[1].replace(/['"]/g, '');
+                        }
+                    }
                     return response.blob().then(blob => {
                         return { blob, filename };
                     });
