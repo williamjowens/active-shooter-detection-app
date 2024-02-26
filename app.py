@@ -100,7 +100,7 @@ def predict():
 
     # Predict the class
     prediction = model.predict(features_scaled)
-    predicted_class = (prediction > 0.5).astype(int)
+    predicted_class = (prediction > 0.4).astype(int)
 
     # Determine the message
     if predicted_class == 1:
