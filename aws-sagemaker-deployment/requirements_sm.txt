@@ -1,0 +1,11 @@
+scikit-learn
+numpy
+pandas
+librosa
+tensorflow
+keras
+joblib
+flask
+gunicorn
+sagemaker
+boto3

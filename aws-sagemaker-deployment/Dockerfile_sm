@@ -1,0 +1,33 @@
+# Start with a base image
+FROM --platform=linux/arm64 python:3.10-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=TRUE
+ENV PYTHONUNBUFFERED=TRUE
+
+# Set the working directory to /app
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    python3-dev \
+    libsndfile1 \
+    libsndfile1-dev \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements_sm.txt .
+RUN pip install --no-cache-dir -r requirements_sm.txt
+
+# Copy the application files and model artifacts
+COPY serve.py .
+COPY model/audio_classifier ./audio_classifier
+COPY model/scaler.joblib .
+
+# Expose the port the app will run on
+EXPOSE 8080
+
+# Start the application using Gunicorn
+ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:8080", "serve:app"]
