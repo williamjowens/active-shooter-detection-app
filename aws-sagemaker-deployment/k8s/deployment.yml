@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: active-shooter-detector-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: active-shooter-detector
+  template:
+    metadata:
+      labels:
+        app: active-shooter-detector
+    spec:
+      containers:
+      - name: active-shooter-detector
+        image: 339712991889.dkr.ecr.us-west-1.amazonaws.com/active-shooter-detector:latest
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
